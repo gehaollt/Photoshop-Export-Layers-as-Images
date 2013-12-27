@@ -3,7 +3,7 @@
 
 // DESCRIPTION: 
 //	Saves each layer in the active document to a PNG or JPG file named after the layer. 
-//	These files will be created in the current document folder (same as working PSD).
+//	These files will be created in a folder with the name of the PSD located in the same folder as the PSD.
 
 // REQUIRES: 
 // 	Adobe Photoshop CS2 or higher
@@ -31,12 +31,13 @@ function main() {
     prefs.fileQuality = 12;
     prefs.filePath = app.activeDocument.path;
     prefs.count = 0;
+    prefs.folders = false;
 
     //instantiate dialogue
     Dialog();
     hideLayers(activeDocument);
     saveLayers(activeDocument);
-    toggleVisibility(activeDocument);
+    showLayers(activeDocument);
     alert("Saved " + prefs.count + " files.");
 }
 
@@ -44,16 +45,19 @@ function hideLayers(ref) {
     var len = ref.layers.length;
     for (var i = 0; i < len; i++) {
         var layer = ref.layers[i];
-        if (layer.typename == 'LayerSet') hideLayers(layer);
-        else layer.visible = false;
+        if (layer.typename == 'LayerSet') {
+            layer.visible = true;
+            hideLayers(layer);
+        } else layer.visible = false;
     }
 }
 
-function toggleVisibility(ref) {
+function showLayers(ref) {
     var len = ref.layers.length;
     for (var i = 0; i < len; i++) {	
         layer = ref.layers[i];
-        layer.visible = !layer.visible;
+        if(layer.typename == 'LayerSet') showLayers(layer);
+        layer.visible = true;
     }
 }
 
@@ -69,23 +73,37 @@ function saveLayers(ref) {
         } else {
             // otherwise make sure the layer is visible and save it
             layer.visible = true;
-            saveImage(layer.name);
+            saveImage(layer);
             layer.visible = false;
         }
     }
 }
 
-function saveImage(layerName) {
-    var handle = getUniqueName(prefs.filePath + "/" + layerName);
+function saveImage(layer) {
+    var handle =  layer.name;
+    if (prefs.folders) handle = getFolder(layer, handle);
+    handle = prefs.filePath + "/" + activeDocument.name.slice(0,-4) + "/" + handle;
+    handle = getUniqueName(handle);
     prefs.count++;
-    
+
     if(prefs.fileType=="PNG" && prefs.fileQuality=="8") {
         SavePNG8(handle); 
     } else if (prefs.fileType=="PNG" && prefs.fileQuality=="24") {
         SavePNG24(handle);
-    } else {
+    } else if (prefs.fileType=="JPG") {
         SaveJPEG(handle); 
+    } else {
+        // default save format
+        SavePNG24(handle);
     }
+}
+
+function getFolder(layer, handle) {
+    if (layer.parent.typename == 'LayerSet') {
+        handle = layer.parent.name + '/' + handle;
+        handle = getFolder(layer.parent, handle);
+    }
+    return handle
 }
 
 function getUniqueName(fileroot) { 
@@ -98,6 +116,9 @@ function getUniqueName(fileroot) {
         if(handle.exists) {
             filename = fileroot + "-" + padder(i, 3);
         } else {
+            if(!handle.parent.exists){
+                handle.parent.create();
+            }
             return handle; 
         }
     }
@@ -133,6 +154,7 @@ function Dialog() {
     dlg.saver = dlg.add("dropdownlist", undefined, ""); 
     dlg.quality = dlg.add("dropdownlist", undefined, "");
     dlg.pngtype = dlg.add("dropdownlist", undefined, "");
+    dlg.folders = dlg.add("checkbox", undefined, "Organize Folders");
 
 
     // file type
@@ -167,7 +189,7 @@ function Dialog() {
     var pngtypeOpt = [];
     pngtypeOpt[0]=8;
     pngtypeOpt[1]=24;
-    dlg.pngtype.add ('item', ""+ 8 );
+    dlg.pngtype.add ('item', "" + 8 );
     dlg.pngtype.add ('item', "" + 24);
 
     // trigger functions
@@ -177,6 +199,10 @@ function Dialog() {
     dlg.pngtype.onChange = function() {
        prefs.fileQuality = pngtypeOpt[parseInt(this.selection)]; 
     };
+
+    dlg.folders.onClick = function() {
+        prefs.folders = !prefs.folders;
+    }
 
     // remainder of UI
     var uiButtonRun = "Continue"; 
