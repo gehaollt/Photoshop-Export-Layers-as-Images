@@ -32,6 +32,7 @@ function main() {
     prefs.filePath = app.activeDocument.path;
     prefs.count = 0;
     prefs.folders = false;
+    prefs.trim = false;
 
     //instantiate dialogue
     Dialog();
@@ -86,7 +87,13 @@ function saveImage(layer) {
     handle = getUniqueName(handle);
     prefs.count++;
 
-    if(prefs.fileType=="PNG" && prefs.fileQuality=="8") {
+    var dupDocument;
+    if (prefs.trim) {
+        dupDocument = activeDocument.duplicate();
+        dupDocument.trim(TrimType.TRANSPARENT);
+    }
+
+    if (prefs.fileType=="PNG" && prefs.fileQuality=="8") {
         SavePNG8(handle); 
     } else if (prefs.fileType=="PNG" && prefs.fileQuality=="24") {
         SavePNG24(handle);
@@ -94,8 +101,10 @@ function saveImage(layer) {
         SaveJPEG(handle); 
     } else {
         // default save format
-        SavePNG24(handle);
+        SavePNG8(handle);
     }
+
+    if (prefs.trim) dupDocument.close(SaveOptions.DONOTSAVECHANGES);
 }
 
 function getFolder(layer, handle) {
@@ -130,7 +139,7 @@ function padder(input, padLength) {
     return result;
 }
 
-function SavePNG8(saveFile) { 
+function SavePNG8(saveFile) {
     exportOptionsSaveForWeb = new ExportOptionsSaveForWeb();
     exportOptionsSaveForWeb.format = SaveDocumentType.PNG
     exportOptionsSaveForWeb.dither = Dither.NONE;
@@ -138,8 +147,11 @@ function SavePNG8(saveFile) {
 } 
 
 function SavePNG24(saveFile) { 
-    pngSaveOptions = new PNGSaveOptions(); 
-    activeDocument.saveAs(saveFile, pngSaveOptions, true, Extension.LOWERCASE); 
+    exportOptionsSaveForWeb = new ExportOptionsSaveForWeb();
+    exportOptionsSaveForWeb.format = SaveDocumentType.PNG
+    exportOptionsSaveForWeb.PNG8 = false;
+    exportOptionsSaveForWeb.dither = Dither.NONE;
+    activeDocument.exportDocument( saveFile, ExportType.SAVEFORWEB, exportOptionsSaveForWeb );
 } 
 
 function SaveJPEG(saveFile) { 
@@ -155,6 +167,7 @@ function Dialog() {
     dlg.quality = dlg.add("dropdownlist", undefined, "");
     dlg.pngtype = dlg.add("dropdownlist", undefined, "");
     dlg.folders = dlg.add("checkbox", undefined, "Organize Folders");
+    dlg.trim = dlg.add("checkbox", undefined, "Trim");
 
 
     // file type
@@ -202,7 +215,10 @@ function Dialog() {
 
     dlg.folders.onClick = function() {
         prefs.folders = !prefs.folders;
-    }
+    };
+    dlg.trim.onClick = function() {
+        prefs.trim = !prefs.trim;
+    };
 
     // remainder of UI
     var uiButtonRun = "Continue"; 
