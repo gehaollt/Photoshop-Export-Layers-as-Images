@@ -40,6 +40,10 @@ How To Use:
 Version History:
 -------------------------------
 
+<b>27 December 2013</b> by [Eric Mascot](http://www.github.com/slek120)
+
+* Added folder structuring option
+
 <b>2 December 2013</b> by [Justin Wang](http://www.github.com/Tangleworm)
 
 * Added support for both PNG-24 and PNG-8
