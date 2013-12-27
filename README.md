@@ -33,7 +33,7 @@ How To Use:
 1. Open Photoshop
 2. File -> Scripts -> Browse...
 3. Locate the file, and open it.
-
+Optional: Save SaveLayers.jsx in /Adobe Photoshop/Presets/Scripts/
 
 [View Screenshots](http://imgur.com/a/os9XV)
 
