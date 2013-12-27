@@ -43,6 +43,7 @@ Version History:
 <b>27 December 2013</b> by [Eric Mascot](http://www.github.com/slek120)
 
 * Added folder structuring option
+* Added trim option
 
 <b>2 December 2013</b> by [Justin Wang](http://www.github.com/Tangleworm)
 
